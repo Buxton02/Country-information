@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment 1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100&family=Roboto:wght@300&family=Sometype+Mono&family=Work+Sans:ital,wght@0,300;1,200&display=swap" rel="stylesheet">
+
+    <style>
+        body{
+            background-color: #28282B;
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+        }
+        p{
+            display: inline;
+            padding: 20px 0 0 20px;
+        }
+
+        table{
+            margin-top: 30px;
+            border: 1px solid #ddd;
+            border-collapse: collapse;
+            text-align: center;
+            width: 90%;
+            margin: auto;
+        }
+
+        th,td{
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            font-weight: bold;
+        }
+
+        td:first-child{
+            background-color: #FF6103;
+            border:0;
+        }
+
+        th{
+            background-color: #CD3700;
+        }
+
+        #heading{
+            display: flex;
+            flex-direction: row;
+            align-items: baseline;
+            justify-content: space-evenly;
+            width: auto;
+            background-color: #CD3700;
+            border-radius: 25px;
+            padding: 50px 20px;
+            margin-bottom: 50px;
+            border: solid 1px white;
+            text-align: center;
+            box-shadow: 8px 7px 8px 2px  black;
+        }
+        #info{
+            font-weight: bold;
+            display: flex;
+            
+        }
+
+        #search{
+            color: white;
+            background-color: #28282B ;
+            border-radius: 10px 10px 10px 10px;
+        }
+
+        #search::placeholder{
+            color: white;
+        }
+
+        #searchButton{
+            color: white;
+            background-color: #28282B ;
+            border-radius: 0px 0px 10px 10px;
+        }
+
+        select{
+            
+            color: white;
+            background-color: #28282B ;
+        }
+
+        #error{
+            text-align: center;
+        }
+
+        
+
+        
+   </style>
+    <script 
+    src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js">
+    </script>
+    <script>
+        $(document).ready(function(){
+            //Dropdown Menu
+            const selectRegions = (data) => {
+                for(let i=0; i<data.length; i++){
+                    const select = `<option>${data[i]}</option>`
+                    $('#regions').append(select);
+                }
+            }
+
+            $.getJSON("https://www.cs.kent.ac.uk/people/staff/yh/api/country-data/countries/regions", (data) => {
+                selectRegions(data);
+            })
+            
+            //error message disabled until no results found
+            const error = $("#error");
+            error.hide();
+
+            const fillTable = (data) => {
+
+                var total =0;
+                var largest = 0;
+                var largestName;
+                var mostPopulated = 0;
+                var mostPopulatedName;
+
+                if(data.length == 0){
+                    error.show();
+                }
+                else{
+                    error.hide();
+                    for(let i=0; i<data.length; i++){
+                        const allInfo = `<tr id="tableRow"><td><strong>${data[i].code}</strong></td>
+                            <td><img src="${data[i].flag}" height=100 ></td>
+                            <td>${data[i].name}</td>
+                            <td>${data[i].capital}</td>
+                            <td>${data[i].population}</td>
+                            <td>${data[i].area} km&#178;</td>
+                            <td>${(data[i].population / data[i].area).toFixed(1)} per km&#178;</td></tr>`;
+                        
+                        //const allInfoInBody = `<tbody id="tableBody">${allInfo}</tbody>`;
+                        $("#countryData").append(allInfo);
+                        
+                        //collecting information to display
+                        if(largest<data[i].area){
+                            largest = data[i].area;
+                            largestName = data[i].name;
+                        }
+
+                        if(mostPopulated<data[i].population){
+                            mostPopulated = data[i].population;
+                            mostPopulatedName = data[i].name;
+                        }
+                    }
+                }
+
+                
+
+                
+
+                //displaying extra information
+                total = data.length;
+                $("#total").text(`Total Countries: ${total}`);
+
+                $("#largest").text(`Largest Country: ${largestName}`);
+
+                $("#population").text(`Most Populated Country: ${mostPopulatedName}`);
+            } 
+
+            const selectCorrectRegion = (name) =>{
+                $.getJSON(`https://www.cs.kent.ac.uk/people/staff/yh/api/country-data/countries/region/${name}`, (data) => {
+                fillTable(data);
+                
+            })
+            }
+
+            //Opens on Africa
+            selectCorrectRegion("Africa");
+
+            $("#regions").change(function(){
+                $("td, #tableRow").remove();
+                selectCorrectRegion($("#regions option:selected").text());
+            })
+            
+            //search bar
+            $("#searchButton").on('click', function(){
+                $("td, #tableRow").remove();
+                var searching = $("#search").val();
+                
+                continentData = $("#regions option:selected").text();
+                var data = $.getJSON(`https://www.cs.kent.ac.uk/people/staff/yh/api/country-data/countries/region/${continentData}`, (data) => {
+                    fillTable(searchTable(searching, data));
+                })
+            })
+
+         
+
+            const searchTable = (searching, data) => {
+                const proccesedData = [];
+
+                for(let i=0; i<data.length; i++){
+                    searching = searching.toLowerCase();
+                    
+                    try{
+                        var countryName = (data[i].name).toLowerCase();
+                        
+                    }
+                    catch(TypeError){
+                        var countryName = "null";
+                    }
+
+                    try{
+                        var capitalName = (data[i].capital).toLowerCase();
+                    }
+                    catch(TypeError){
+                        var capitalName = "null";
+                    }
+                    
+                    if(countryName.includes(searching) || capitalName.includes(searching)){
+                        proccesedData.push(data[i]);
+                    }
+
+                }
+                console.log(proccesedData);
+                return proccesedData;
+            }
+
+
+            
+        })
+
+    </script>
+    
+</head>
+<body>
+    <div id="heading">
+
+        <div id="select">
+            <select id="regions"></select>
+        </div>
+
+        <div id="info">
+            
+            <p id="total" class="info">Total Countries: </p>
+            <p id="largest" class="info">Largest Country: </p>
+            <p id="population" class="info">Most Populated Country: </p>
+        </div>
+
+        <div id="searching">
+            <input type="search" id="search" placeholder="Enter Country Name...">
+            <button id="searchButton">Search</button>
+        </div>
+    </div>    
+        
+    <table id="countryData">
+        <tr>
+            <th>Country Code</th>
+            <th>Flag</th>
+            <th>Name</th>
+            <th>Capital</th>
+            <th>Population</th>
+            <th>Area</th>
+            <th>Population Density</th>         
+        </tr>
+        
+    </table>
+
+    <h3 id="error">No Countries Found! Please Try Again...</h3>
+</body>
+</html>
